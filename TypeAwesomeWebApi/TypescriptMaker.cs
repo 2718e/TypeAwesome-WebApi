@@ -29,7 +29,7 @@ namespace TypeAwesomeWebApi
 
         // when figuring out what types to export, only want the element type for collection types -
         // will just map collection types to arrays. Dictionaries not handled at the moment. 
-        private static Type StripCollectionWrappers(Type inType)
+        private static Type RemoveCollectionWrappers(Type inType)
         {
             var t = inType;
             while (t.HasElementType)
@@ -39,12 +39,35 @@ namespace TypeAwesomeWebApi
             return t;
         }
 
+        private static Type RemoveNullableWrapper(Type inType)
+        {
+            if (IsNullable(inType)) // System.Nullable cannot take another nullable as argument, so don't need a while here
+            {
+                return Nullable.GetUnderlyingType(inType);
+            }
+            else
+            {
+                return inType;
+            }
+        }
+
+        private static Type RemoveWrapperTypes(Type inType)
+        {
+            var t = inType;
+            while (t.HasElementType || IsNullable(t))
+            {
+                t = RemoveCollectionWrappers(t);
+                t = RemoveNullableWrapper(t);
+            }
+            return t;
+        }
+
         private static List<Type> GetTypesForMethod(MethodInfo method)
         {
             var usedTypes = method.GetParameters().Select(p => p.ParameterType).ToList();
-            var strippedTypes = usedTypes.Select(StripCollectionWrappers);
+            var strippedTypes = usedTypes.Select(RemoveWrapperTypes);
             var result = strippedTypes.ToList();
-            result.Add(method.ReturnType);
+            result.Add(RemoveWrapperTypes(method.ReturnType));
             return result;
         }
 
@@ -61,7 +84,7 @@ namespace TypeAwesomeWebApi
             if (!(t.IsPrimitive || t == typeof(string) || set.Contains(t)))
             {
                 set.Add(t);
-                t.GetProperties().Select(p => StripCollectionWrappers(p.PropertyType)).ToList().ForEach(pType => AddTypeToSetRecursive(pType, set));
+                t.GetProperties().Select(p => RemoveWrapperTypes(p.PropertyType)).ToList().ForEach(pType => AddTypeToSetRecursive(pType, set));
             }
         }
 
@@ -87,6 +110,11 @@ namespace TypeAwesomeWebApi
             { typeof(int), "number" },
             { typeof(long), "number" },
         };
+        private static bool IsNullable(Type t)
+        {
+            return (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>));
+        }
+
 
         /// <summary>
         /// Converts A C# type, as found in the property of a model class to a typescript type
@@ -111,28 +139,38 @@ namespace TypeAwesomeWebApi
             {
                 result = $"I{cSharpType.Name}";
             }
+            else if (IsNullable(cSharpType))
+            {
+                result = $"{ResolveCSharpType(Nullable.GetUnderlyingType(cSharpType))} | null";
+            }
             else
             {
-                // at this stage wont worry about generics.
                 result = "any";
             }
             return result;
         }
+
+
 
         private static void GenerateModelInterfaces(List<Type> typesToExport, StringBuilder exportBuilder)
         {
             foreach (var model in typesToExport)
             {
                 var typeName = ResolveCSharpType(model);
-                exportBuilder.AppendFormat("export interface {0} {1}", typeName, "{\r\n");
-                var properties = model.GetProperties().ToList();
-                foreach (var property in properties)
+                // any is returned from ResolveCSharpType if don't know how to process the type.
+                // don't want to generate an interface in this case
+                if (!typeName.Equals("any", StringComparison.Ordinal))
                 {
-                    var propertyTypeName = ResolveCSharpType(property.PropertyType);
-                    var propertyName = property.Name;
-                    exportBuilder.Append($"  {propertyName} : {propertyTypeName};\r\n");
+                    exportBuilder.AppendFormat("export interface {0} {1}", typeName, "{\r\n");
+                    var properties = model.GetProperties().ToList();
+                    foreach (var property in properties)
+                    {
+                        var propertyTypeName = ResolveCSharpType(property.PropertyType);
+                        var propertyName = property.Name;
+                        exportBuilder.Append($"  {propertyName} : {propertyTypeName};\r\n");
+                    }
+                    exportBuilder.Append("}\r\n\r\n");
                 }
-                exportBuilder.Append("}\r\n\r\n");
             }
         }
 
@@ -301,7 +339,8 @@ namespace TypeAwesomeWebApi
             {
                 var queryParamsList = QueryParamsToParameterList(info);
                 var queryParamsObject = QueryParamsObjectFromList(info);
-                exportBuilder.Append($"export function {info.Controller}{info.Action}({queryParamsList}, {info.BodyParamName} : {info.BodyParamType}) : PromiseLike<{info.ReturnType}>{"{\r\n"}");
+                var commaOrNot = queryParamsList.Equals(String.Empty, StringComparison.Ordinal) ? "" : ",";
+                exportBuilder.Append($"export function {info.Controller}{info.Action}({queryParamsList}{commaOrNot} {info.BodyParamName} : {info.BodyParamType}) : PromiseLike<{info.ReturnType}>{"{\r\n"}");
                 exportBuilder.Append($"var queryParams = {queryParamsObject};");
                 exportBuilder.Append($"return CallMethodWithBodyParam({MethodInfoName(info)}, {info.BodyParamName}, queryParams) \r\n{"}"}\r\n\r\n");
             }
