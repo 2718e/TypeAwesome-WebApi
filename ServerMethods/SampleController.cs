@@ -5,12 +5,14 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net.Http;
 using System.Web.Http;
+using System.Reflection;
+using System.IO;
 
 namespace ServerMethods
 {
     public class SampleController : ApiController
     {
-
+        [HttpGet]
         public Samplemodel2 SampleGet()
         {
             var result = new Samplemodel2
@@ -26,6 +28,7 @@ namespace ServerMethods
             return result;
         }
 
+        [HttpPost]
         public Samplemodel2 DuplicateModel(SampleModel toClone, int nTimes)
         {
             var result = new Samplemodel2
@@ -37,7 +40,21 @@ namespace ServerMethods
             return result;
         }
 
+        [HttpGet]
         public double Multiply3Numbers(double n1, double n2, double n3) { return n1 * n2 * n3; }
 
+        [HttpGet]
+        public Pet GetPet()
+        {
+            return Pet.Dog;
+        }
+
+        [HttpGet]
+        public string ApiDescription()
+        {
+            var self = Assembly.Load("ServerMethods");
+            var result = TypeAwesomeWebApi.TypescriptMaker.MakeScriptsFrom(new Assembly[] { self }, "MyApi");
+            return result;
+        }
     }
 }

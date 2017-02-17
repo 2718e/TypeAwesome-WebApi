@@ -134,6 +134,9 @@ namespace TypeAwesomeWebApi
                 var typeofArray = ResolveCSharpType(cSharpType.GetElementType());
                 // TODO use indexer if a string dictionary.
                 result = $"{typeofArray}[]";
+            } else if (cSharpType.IsEnum)
+            {
+                result = $"E{cSharpType.Name}";
             }
             else if (!(cSharpType.GenericTypeArguments.Length > 0))
             {
@@ -150,7 +153,33 @@ namespace TypeAwesomeWebApi
             return result;
         }
 
+        private static void GenerateInterfaceForModel(Type model, StringBuilder exportBuilder)
+        {
+            var typeName = ResolveCSharpType(model);
 
+            exportBuilder.AppendFormat("export interface {0} {1}", typeName, "{\r\n");
+            var properties = model.GetProperties().ToList();
+            foreach (var property in properties)
+            {
+                var propertyTypeName = ResolveCSharpType(property.PropertyType);
+                var propertyName = property.Name;
+                exportBuilder.Append($"  {propertyName} : {propertyTypeName};\r\n");
+            }
+            exportBuilder.Append("}\r\n\r\n");
+        }
+
+        private static void GenerateEnumForModel(Type model, StringBuilder exportBuilder)
+        {
+            var typeName = ResolveCSharpType(model);
+            exportBuilder.Append($"export enum {typeName} {"{"}\r\n");
+            List<string> fieldLines = new List<string>();
+            foreach (var value in Enum.GetValues(model)) 
+            {
+                fieldLines.Add($"    {value} = {(int)value}");
+            }
+            exportBuilder.Append(fieldLines.Aggregate((s, acc) => $"{s},\r\n{acc}"));
+            exportBuilder.Append("\r\n}\r\n\r\n");
+        }
 
         private static void GenerateModelInterfaces(List<Type> typesToExport, StringBuilder exportBuilder)
         {
@@ -161,16 +190,15 @@ namespace TypeAwesomeWebApi
                 // don't want to generate an interface in this case
                 if (!typeName.Equals("any", StringComparison.Ordinal))
                 {
-                    exportBuilder.AppendFormat("export interface {0} {1}", typeName, "{\r\n");
-                    var properties = model.GetProperties().ToList();
-                    foreach (var property in properties)
+                    if (model.IsEnum)
                     {
-                        var propertyTypeName = ResolveCSharpType(property.PropertyType);
-                        var propertyName = property.Name;
-                        exportBuilder.Append($"  {propertyName} : {propertyTypeName};\r\n");
+                        GenerateEnumForModel(model, exportBuilder);
                     }
-                    exportBuilder.Append("}\r\n\r\n");
-                }
+                    else
+                    {
+                        GenerateInterfaceForModel(model, exportBuilder);
+                    }
+                } 
             }
         }
 
@@ -289,7 +317,7 @@ namespace TypeAwesomeWebApi
             foreach (var info in extracts)
             {
                 exportBuilder.Append($"export var {MethodInfoName(info)} : IMethodInfo<{info.BodyParamType},{QueryParamsTypeName(info)},{info.ReturnType}> = {"{\r\n"}");
-                exportBuilder.Append($"    url : \"api/{info.Controller}/{info.Action}\"{"\r\n}\r\n\r\n"}");
+                exportBuilder.Append($"    url : \"/api/{info.Controller}/{info.Action}\"{"\r\n}\r\n\r\n"}");
             }
         }
 
@@ -346,6 +374,14 @@ namespace TypeAwesomeWebApi
             }
         }
 
+        private static string GetHeaders()
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            var stream = assembly.GetManifestResourceStream(typeof(TypescriptMaker), "templates.headers.tst");
+            var s = new StreamReader(stream).ReadToEnd();
+            return s;
+        }
+
 
         public static string MakeScriptsFrom(IEnumerable<Assembly> assemblies, string moduleName)
         {
@@ -359,7 +395,7 @@ namespace TypeAwesomeWebApi
             resultBuilder.AppendLine();
             resultBuilder.Append($"module {moduleName} {"{\r\n\r\n"}");
             // insert the rest of the stuff
-            resultBuilder.Append(File.ReadAllText(Path.Combine(".", "templates", "headers.tst")));
+            resultBuilder.Append(GetHeaders());
             GenerateModelInterfaces(typesToExport, resultBuilder);
             GenerateQueryParamInterfaces(methodsToExport, resultBuilder);
             GenerateIMethodInfos(methodsToExport, resultBuilder);

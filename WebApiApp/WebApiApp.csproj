@@ -107,6 +107,12 @@
     <Folder Include="Models\" />
     <Folder Include="TsSrc\" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ServerMethods\ServerMethods.csproj">
+      <Project>{e1324617-04f6-46d5-bfb1-09020c436644}</Project>
+      <Name>ServerMethods</Name>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>

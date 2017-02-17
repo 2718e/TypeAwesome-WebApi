@@ -7,8 +7,17 @@ using System.Threading.Tasks;
 namespace ServerMethods
 {
 
+    public enum Pet
+    {
+        Cat,
+        Dog,
+        Bird,
+        Horse
+    }
+
     public class SampleModel
     {
+
         public string Name { get; set; }
 
         public int Id { get; set; }
