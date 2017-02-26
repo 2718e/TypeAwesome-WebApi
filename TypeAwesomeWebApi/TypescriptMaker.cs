@@ -163,7 +163,7 @@ namespace TypeAwesomeWebApi
             {
                 var propertyTypeName = ResolveCSharpType(property.PropertyType);
                 var propertyName = property.Name;
-                exportBuilder.Append($"  {propertyName} : {propertyTypeName};\r\n");
+                exportBuilder.Append($"  {propertyName}: {propertyTypeName};\r\n");
             }
             exportBuilder.Append("}\r\n\r\n");
         }
@@ -252,7 +252,7 @@ namespace TypeAwesomeWebApi
                     exportBuilder.AppendFormat("export interface {0} {1}", typeName, "{\r\n");
                     for (int i = 0; i < info.QueryParamNames.Length; i++)
                     {
-                        exportBuilder.Append($"  {info.QueryParamNames[i]} : {info.QueryParamTypes[i]};\r\n");
+                        exportBuilder.Append($"  {info.QueryParamNames[i]}: {info.QueryParamTypes[i]};\r\n");
                     }
                     exportBuilder.Append("}\r\n\r\n");
                 }
@@ -316,8 +316,8 @@ namespace TypeAwesomeWebApi
             var extracts = methods.Select(m => new ExtractedMethodInfo(m)).ToList();
             foreach (var info in extracts)
             {
-                exportBuilder.Append($"export var {MethodInfoName(info)} : IMethodInfo<{info.BodyParamType},{QueryParamsTypeName(info)},{info.ReturnType}> = {"{\r\n"}");
-                exportBuilder.Append($"    url : \"/api/{info.Controller}/{info.Action}\"{"\r\n}\r\n\r\n"}");
+                exportBuilder.Append($"export const {MethodInfoName(info)}: IMethodInfo<{info.BodyParamType}, {QueryParamsTypeName(info)}, {info.ReturnType}> = {"{"}\r\n");
+                exportBuilder.Append($"    url : \"/api/{info.Controller}/{info.Action}\";\r\n{"}"};\r\n\r\n");
             }
         }
 
@@ -329,7 +329,7 @@ namespace TypeAwesomeWebApi
             }
             else
             {
-                var result = Enumerable.Range(0, info.QueryParamNames.Length).Select(i => $"in{info.QueryParamNames[i]} : {info.QueryParamTypes[i]}").Aggregate((s, acc) => $"{s}, {acc}");
+                var result = Enumerable.Range(0, info.QueryParamNames.Length).Select(i => $"in{info.QueryParamNames[i]}: {info.QueryParamTypes[i]}").Aggregate((s, acc) => $"{s}, {acc}");
                 return result;
             }
         }
@@ -354,9 +354,9 @@ namespace TypeAwesomeWebApi
             {
                 var queryParamsList = QueryParamsToParameterList(info);
                 var queryParamsObject = QueryParamsObjectFromList(info);
-                exportBuilder.Append($"export function {info.Controller}{info.Action}({queryParamsList}) : PromiseLike<{info.ReturnType}>{"{\r\n"}");
-                exportBuilder.Append($"var queryParams = {queryParamsObject};");
-                exportBuilder.Append($"return CallMethodNoBodyParam({MethodInfoName(info)}, queryParams) \r\n{"}"}\r\n\r\n");
+                exportBuilder.Append($"export function {info.Controller}{info.Action}({queryParamsList}): PromiseLike<{info.ReturnType}>{" {\r\n"}");
+                exportBuilder.Append($"    let queryParams = {queryParamsObject};\r\n");
+                exportBuilder.Append($"    return CallMethodNoBodyParam({MethodInfoName(info)}, queryParams);\r\n{"}"}\r\n\r\n");
             }
         }
 
@@ -368,9 +368,9 @@ namespace TypeAwesomeWebApi
                 var queryParamsList = QueryParamsToParameterList(info);
                 var queryParamsObject = QueryParamsObjectFromList(info);
                 var commaOrNot = queryParamsList.Equals(String.Empty, StringComparison.Ordinal) ? "" : ",";
-                exportBuilder.Append($"export function {info.Controller}{info.Action}({queryParamsList}{commaOrNot} {info.BodyParamName} : {info.BodyParamType}) : PromiseLike<{info.ReturnType}>{"{\r\n"}");
-                exportBuilder.Append($"var queryParams = {queryParamsObject};");
-                exportBuilder.Append($"return CallMethodWithBodyParam({MethodInfoName(info)}, {info.BodyParamName}, queryParams) \r\n{"}"}\r\n\r\n");
+                exportBuilder.Append($"export function {info.Controller}{info.Action}({queryParamsList}{commaOrNot} {info.BodyParamName}: {info.BodyParamType}): PromiseLike<{info.ReturnType}>{" {\r\n"}");
+                exportBuilder.Append($"    let queryParams = {queryParamsObject};\r\n");
+                exportBuilder.Append($"    return CallMethodWithBodyParam({MethodInfoName(info)}, {info.BodyParamName}, queryParams);\r\n{"}"}\r\n\r\n");
             }
         }
 
@@ -390,8 +390,8 @@ namespace TypeAwesomeWebApi
             var methodsToExport = controllers.SelectMany(controller => controller.GetMethods().Where(m=>m.DeclaringType == controller)).ToList();
             var typesToExport = GetTypesReferenced(methodsToExport).ToList();
             StringBuilder resultBuilder = new StringBuilder();
-            resultBuilder.AppendLine(@"import * as _ from 'lodash';");
-            resultBuilder.AppendLine(@"import * as $ from 'jquery';");
+            resultBuilder.AppendLine("import * as _ from \"lodash\";");
+            resultBuilder.AppendLine("import * as $ from \"jquery\";");
             resultBuilder.AppendLine();
             resultBuilder.Append($"module {moduleName} {"{\r\n\r\n"}");
             // insert the rest of the stuff
