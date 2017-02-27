@@ -317,7 +317,7 @@ namespace TypeAwesomeWebApi
             foreach (var info in extracts)
             {
                 exportBuilder.Append($"export const {MethodInfoName(info)}: IMethodInfo<{info.BodyParamType}, {QueryParamsTypeName(info)}, {info.ReturnType}> = {"{"}\r\n");
-                exportBuilder.Append($"    url : \"/api/{info.Controller}/{info.Action}\";\r\n{"}"};\r\n\r\n");
+                exportBuilder.Append($"    url : \"/api/{info.Controller}/{info.Action}\"\r\n{"}"};\r\n\r\n");
             }
         }
 
