@@ -5,7 +5,7 @@
 export function BuildQueryString<TQueryStringParams>(queryParams: TQueryStringParams): string {
     let result = "";
     if (_.keys(queryParams).length > 0) {
-        let result = "/?" + _(queryParams).keys().map(key => "" + key + "=" + queryParams[key]).reduce((s: string, acc: string) => s + "&" + acc);
+        result = "/?" + _(queryParams).keys().map(key => "" + key + "=" + queryParams[key]).reduce((s: string, acc: string) => s + "&" + acc);
     }
     return result;
 }
