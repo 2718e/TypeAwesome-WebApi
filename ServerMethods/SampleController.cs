@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Web.Http;
 using System.Reflection;
 using System.IO;
+using TypeAwesomeWebApi;
 
 namespace ServerMethods
 {
@@ -52,8 +53,20 @@ namespace ServerMethods
         [HttpGet]
         public string ApiDescription()
         {
-            var self = Assembly.Load("ServerMethods");
-            var result = TypeAwesomeWebApi.TypescriptMaker.MakeScriptsFrom(new Assembly[] { self }, "MyApi");
+            var config = new TypescriptMakerConfig { ControllerAssemblies = new Assembly[] { Assembly.Load("ServerMethods") } };
+            var result = new TypescriptMaker(config).MakeTypescript();
+            return result;
+        }
+
+        [HttpGet]
+        public SimpleTypesModel GetIdentifiedTime()
+        {
+            var result = new SimpleTypesModel
+            {
+                Id = Guid.NewGuid(),
+                Timestamp = DateTime.Now,
+                Duration = new TimeSpan(1, 2, 3, 4, 5)
+            };
             return result;
         }
     }

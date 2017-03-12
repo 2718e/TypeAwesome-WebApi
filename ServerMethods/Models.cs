@@ -36,4 +36,15 @@ namespace ServerMethods
 
     }
 
+    public class SimpleTypesModel
+    {
+
+        public DateTime Timestamp { get; set; }
+
+        public Guid Id { get; set; }
+
+        public TimeSpan Duration { get; set; }
+
+    }
+
 }

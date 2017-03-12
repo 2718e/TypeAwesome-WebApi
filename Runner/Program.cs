@@ -17,7 +17,12 @@ namespace Runner
             var commandParser = new CommandLineParser(args);
             var outPath = commandParser.GetOptionArgument("--out-path", Path.Combine(".", "typeawesomeresults.ts"));
             var thingToExport = Assembly.Load("ServerMethods");
-            var result = TypescriptMaker.MakeScriptsFrom(new Assembly[] { thingToExport }, "MyApi");
+            var config = new TypescriptMakerConfig
+            {
+                ControllerAssemblies = new Assembly[] { thingToExport }
+            };
+            var tsBuilder = new TypescriptMaker(config);
+            var result = tsBuilder.MakeTypescript();
             File.WriteAllText(outPath, result);
         }
     }
