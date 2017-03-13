@@ -21,7 +21,7 @@ namespace TypeAwesomeWebApi
         /// </summary>
         private static Dictionary<Type, string> PrimitiveTypeMappings = new Dictionary<Type, string>
         {
-            // TODO add all primitive types (e.g. INT16) not jsut commmon aliases
+            // TODO add all primitive types (e.g. Int16) not just commmon aliases
             { typeof(bool), "boolean" },
             { typeof(char), "string" },
             { typeof(string), "string" },
@@ -43,9 +43,10 @@ namespace TypeAwesomeWebApi
         /// </summary>
         /// <param name="cSharpType">the type in c shart</param>
         /// <returns></returns>
-        private static string ResolveCSharpType(Type cSharpType)
+        private string ResolveCSharpType(Type cSharpType)
         {
             var result = "";
+            
             if (PrimitiveTypeMappings.ContainsKey(cSharpType))
             {
                 result = PrimitiveTypeMappings[cSharpType];
@@ -63,6 +64,10 @@ namespace TypeAwesomeWebApi
             else if (SimpleTypes.Contains(cSharpType))
             {
                 result = "string";
+            }
+            else if (!ShouldExportModelType(cSharpType))
+            {
+                result = "any";
             }
             else if (!(cSharpType.GenericTypeArguments.Length > 0))
             {

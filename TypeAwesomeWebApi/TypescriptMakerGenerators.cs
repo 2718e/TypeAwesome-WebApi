@@ -14,7 +14,7 @@ namespace TypeAwesomeWebApi
     public partial class TypescriptMaker
     {
 
-        private static void GenerateInterfaceForModel(Type model, StringBuilder exportBuilder)
+        private void GenerateInterfaceForModel(Type model, StringBuilder exportBuilder)
         {
             var typeName = ResolveCSharpType(model);
 
@@ -29,7 +29,7 @@ namespace TypeAwesomeWebApi
             exportBuilder.Append("}\r\n\r\n");
         }
 
-        private static void GenerateEnumForModel(Type model, StringBuilder exportBuilder)
+        private void GenerateEnumForModel(Type model, StringBuilder exportBuilder)
         {
             var typeName = ResolveCSharpType(model);
             exportBuilder.Append($"export enum {typeName} {"{"}\r\n");
@@ -42,7 +42,7 @@ namespace TypeAwesomeWebApi
             exportBuilder.Append("\r\n}\r\n\r\n");
         }
 
-        private static void GenerateTypesForModels(List<Type> typesToExport, StringBuilder exportBuilder)
+        private void GenerateTypesForModels(List<Type> typesToExport, StringBuilder exportBuilder)
         {
             foreach (var model in typesToExport)
             {
@@ -64,11 +64,11 @@ namespace TypeAwesomeWebApi
         }
 
 
-        private static void GenerateQueryParamInterfaces(List<MethodInfo> methods, StringBuilder exportBuilder)
+        private void GenerateQueryParamInterfaces(List<MethodInfo> methods, StringBuilder exportBuilder)
         {
             foreach (var method in methods)
             {
-                var info = new ExtractedMethodInfo(method);
+                var info = ExtractMethodInfo(method);
                 var queryParams = method.GetParameters().Where(p => GetQueryStringParamType(p) != null).ToList();
                 if (info.QueryParamNames.Length > 0)
                 {
@@ -97,9 +97,9 @@ namespace TypeAwesomeWebApi
             return $"{info.Controller}{info.Action}MethodInfo";
         }
 
-        private static void GenerateIMethodInfos(List<MethodInfo> methods, StringBuilder exportBuilder)
+        private void GenerateIMethodInfos(List<MethodInfo> methods, StringBuilder exportBuilder)
         {
-            var extracts = methods.Select(m => new ExtractedMethodInfo(m)).ToList();
+            var extracts = methods.Select(m => ExtractMethodInfo(m)).ToList();
             foreach (var info in extracts)
             {
                 exportBuilder.Append($"export const {MethodInfoName(info)}: IMethodInfo<{info.BodyParamType}, {QueryParamsTypeName(info)}, {info.ReturnType}> = {"{"}\r\n");
@@ -107,9 +107,9 @@ namespace TypeAwesomeWebApi
             }
         }
 
-        private static void GenerateBodylessCallers(List<MethodInfo> methods, StringBuilder exportBuilder)
+        private void GenerateBodylessCallers(List<MethodInfo> methods, StringBuilder exportBuilder)
         {
-            var infos = methods.Select(m => new ExtractedMethodInfo(m)).Where(info => !info.HasBodyParam()).ToList();
+            var infos = methods.Select(m => ExtractMethodInfo(m)).Where(info => !info.HasBodyParam()).ToList();
             foreach (var info in infos)
             {
                 var queryParamsList = QueryParamsToParameterList(info);
@@ -120,9 +120,9 @@ namespace TypeAwesomeWebApi
             }
         }
 
-        private static void GenerateBodyCallers(List<MethodInfo> methods, StringBuilder exportBuilder)
+        private void GenerateBodyCallers(List<MethodInfo> methods, StringBuilder exportBuilder)
         {
-            var infos = methods.Select(m => new ExtractedMethodInfo(m)).Where(info => info.HasBodyParam()).ToList();
+            var infos = methods.Select(m => ExtractMethodInfo(m)).Where(info => info.HasBodyParam()).ToList();
             foreach (var info in infos)
             {
                 var queryParamsList = QueryParamsToParameterList(info);
