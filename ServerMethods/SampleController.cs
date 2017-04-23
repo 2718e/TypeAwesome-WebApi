@@ -29,6 +29,17 @@ namespace ServerMethods
             return result;
         }
 
+        public void DeleteEverything(bool really)
+        {
+
+        }
+
+        [HttpPut]
+        public int ChangeData(string key, double value)
+        {
+            return 4;
+        }
+
         [HttpPost]
         public Samplemodel2 DuplicateModel(SampleModel toClone, int nTimes)
         {

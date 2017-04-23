@@ -5,7 +5,14 @@ TypeAwesomeWebApi is a small C# program which uses the reflection feature to exp
 Also creates interfaces (and enums if applicable) to describe the shape of data returned from and passed to those functions.
 
 Made this to help with development on a different project. Open sourcing in case someone finds it useful. However, be aware that (currently) this has only 
-been tested or verified implicitly by checking the project it was used in worked as a whole - as such not all potential configurations are tested.
+been tested or verified implicitly by checking the project it was used in worked as a whole - as such not all potential configurations are tested (especially not recent changes).
+
+# Recent Changes
+
+* Made all properties of exported models optional parameters.
+* determining which Http Method (e.g. GET, POST, PUT) to call based on attributes and action name.
+
+# Assumptions / Limitations
 
 Also be aware this only currently supports the subset of Web Api features that were used in aforementioned project. In particular, the following constraints are assumed:
 * no route parameters (i.e. all parameters to controller methods are passed either through body or query string)

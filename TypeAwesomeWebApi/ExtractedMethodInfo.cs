@@ -65,6 +65,59 @@ namespace TypeAwesomeWebApi
             return result;
         }
 
+        private static Dictionary<Type, string> AttributesToHttpMethods = new Dictionary<Type, string>
+        {
+            { typeof(HttpGetAttribute), "GET" },
+            { typeof(HttpPostAttribute), "POST" },
+            { typeof(HttpPutAttribute), "PUT" },
+            { typeof(HttpDeleteAttribute), "DELETE" },
+            { typeof(HttpHeadAttribute), "HEAD" },
+            { typeof(HttpOptionsAttribute), "OPTIONS" },
+            { typeof(HttpPatchAttribute), "PATCH" },
+        };
+
+        private static string[] ActionStarts = { "Get", "Post", "Put", "Delete", "Patch", "Options", "Head" };
+
+        /// <summary>
+        /// Gets the HTTP Method (Get, Post) that should be used to call the method.
+        /// 
+        /// According to https://www.exceptionnotfound.net/using-http-methods-correctly-in-asp-net-web-api/
+        /// 
+        /// 1) If there is an attribute applied (via [HttpGet], [HttpPost], [HttpPut], [AcceptVerbs], etc), the action will accept the specified HTTP method(s).
+        /// 2) If the name of the controller action starts the words "Get", "Post", "Put", "Delete", "Patch", "Options", or "Head", use the corresponding HTTP method.
+        /// 3) Otherwise, the action supports the POST method.
+        /// 
+        /// This method attempts to mostly follow the above logic, however
+        /// - AcceptVerbs is not supported
+        /// - if a controller action supports MULTIPLE Http Methods, only one of these will be returned
+        /// </summary>
+        /// <param name="methodInfo">THe controller method</param>
+        /// <returns></returns>
+        private string GetHttpMethodForMethod(MethodInfo methodInfo)
+        {
+            string result = null;
+            foreach (Type attrType in AttributesToHttpMethods.Keys)
+            {
+                if (Attribute.IsDefined(methodInfo, attrType)) {
+                    result = AttributesToHttpMethods[attrType];
+                    break;
+                }
+            }
+            if (result == null)
+            {
+                foreach(var actionStart in ActionStarts)
+                {
+                    if (methodInfo.Name.StartsWith(actionStart, StringComparison.OrdinalIgnoreCase))
+                    {
+                        result = actionStart.ToUpperInvariant();
+                        break;
+                    }
+                }
+            }
+            result = result ?? "POST";
+            return result;
+        }
+
         private ExtractedMethodInfo ExtractMethodInfo(MethodInfo methodInfo)
         {
             var result = new ExtractedMethodInfo();
@@ -73,6 +126,7 @@ namespace TypeAwesomeWebApi
             result.BodyParamType = "void";
             result.BodyParamName = "parameter";
             result.ReturnType = ResolveCSharpType(methodInfo.ReturnType);
+            result.HttpMethod = GetHttpMethodForMethod(methodInfo);
             var queryParamNames = new List<string> { };
             var queryParamTypes = new List<string> { };
             var queryParams = methodInfo.GetParameters().Where(p => GetQueryStringParamType(p) != null).ToList();
@@ -105,6 +159,7 @@ namespace TypeAwesomeWebApi
             public string BodyParamType { get; set; }
             public string BodyParamName { get; set; }
             public string ReturnType { get; set; }
+            public string HttpMethod { get; set; }
 
             // each in a type/name pair have the same index.
             public string[] QueryParamTypes { get; set; }
@@ -115,7 +170,7 @@ namespace TypeAwesomeWebApi
                 return !BodyParamType.Equals("void", StringComparison.Ordinal);
             }
 
-            
+
         }
 
     }

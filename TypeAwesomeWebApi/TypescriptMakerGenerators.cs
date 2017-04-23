@@ -24,7 +24,7 @@ namespace TypeAwesomeWebApi
             {
                 var propertyTypeName = ResolveCSharpType(property.PropertyType);
                 var propertyName = property.Name;
-                exportBuilder.Append($"  {propertyName}: {propertyTypeName};\r\n");
+                exportBuilder.Append($"  {propertyName}?: {propertyTypeName};\r\n");
             }
             exportBuilder.Append("}\r\n\r\n");
         }
@@ -103,7 +103,8 @@ namespace TypeAwesomeWebApi
             foreach (var info in extracts)
             {
                 exportBuilder.Append($"export const {MethodInfoName(info)}: IMethodInfo<{info.BodyParamType}, {QueryParamsTypeName(info)}, {info.ReturnType}> = {"{"}\r\n");
-                exportBuilder.Append($"    url : \"/api/{info.Controller}/{info.Action}\"\r\n{"}"};\r\n\r\n");
+                exportBuilder.Append($"    url: \"/api/{info.Controller}/{info.Action}\",\r\n");
+                exportBuilder.Append($"    httpMethod: \"{info.HttpMethod}\"\r\n{"}"};\r\n\r\n");
             }
         }
 

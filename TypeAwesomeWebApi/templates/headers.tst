@@ -1,5 +1,6 @@
 ﻿export interface IMethodInfo<TBodyParam, TQueryStringParams, TReturn> {
     url: string;
+	httpMethod: string;
 }
 
 export function BuildQueryString<TQueryStringParams>(queryParams: TQueryStringParams): string {
@@ -13,6 +14,7 @@ export function BuildQueryString<TQueryStringParams>(queryParams: TQueryStringPa
 export function CallMethodNoBodyParam<TReturn, TQueryStringParams>(methodInfo: IMethodInfo<void, TQueryStringParams, TReturn>, queryParams: TQueryStringParams): PromiseLike<TReturn> {
     let urlWithQuery = methodInfo.url + BuildQueryString(queryParams);
     let result = $.ajax({
+		type: methodInfo.httpMethod,
         url: urlWithQuery
     });
     return result;
@@ -22,7 +24,7 @@ export function CallMethodWithBodyParam<TBodyParam, TQueryStringParams, TReturn>
     (methodInfo: IMethodInfo<TBodyParam, TQueryStringParams, TReturn>, parameter: TBodyParam, queryParams: TQueryStringParams): PromiseLike<TReturn> {
     let urlWithQuery = methodInfo.url + BuildQueryString(queryParams);
     let result = $.ajax({
-        type: "POST",
+        type: methodInfo.httpMethod,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
         url: urlWithQuery,
